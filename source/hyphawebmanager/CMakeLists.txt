@@ -18,6 +18,9 @@ cmake_policy(SET CMP0020 NEW)
 #
 # Library name and options
 #
+if (${CMAKE_BUILD_TYPE} AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        add_definitions(-DRESOURCES_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+endif()
 
 # Target name
 set(target hyphawebmanager)
@@ -50,6 +53,10 @@ file(GLOB sources
 "${source_path}/*.cpp"
 )
 
+file(GLOB cpsp_sources
+    "${source_path}/*.cpsp"
+)
+
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
@@ -58,6 +65,19 @@ source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
     ${source_group} ${sources})
 
+foreach(CPSP_FILE ${cpsp_sources})
+        get_filename_component(CPSP_FILE_BASE ${CPSP_FILE} NAME_WE)
+        add_custom_command(
+                OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${CPSP_FILE_BASE}.h ${CMAKE_CURRENT_BINARY_DIR}/${CPSP_FILE_BASE}.cpp
+                COMMAND cpspc
+                ARGS --output-dir="${CMAKE_CURRENT_BINARY_DIR}" ${CPSP_FILE}
+                DEPENDS ${CPSP_FILE}
+                COMMENT "Compile Servlet page ${CPSP_FILE}"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+
+        set (CPSP_CXX ${CPSP_CXX} ${CMAKE_CURRENT_BINARY_DIR}/${CPSP_FILE_BASE}.cpp)
+endforeach(CPSP_FILE)
 
 #
 # Create executable
@@ -68,7 +88,8 @@ add_executable(${target}
     MACOSX_BUNDLE
     ${sources}
     ${headers}
-    ${resourcesources}
+    ${CPSP_CXX}
+    ${cpsp_sources}
 )
 
 # Create namespaced alias
@@ -153,6 +174,7 @@ target_link_libraries(${target}
 #
 # Deployment
 #
+install(DIRECTORY ${resource_path} DESTINATION ${INSTALL_DATA} COMPONENT runtime)
 
 # Executable
 install(TARGETS ${target}

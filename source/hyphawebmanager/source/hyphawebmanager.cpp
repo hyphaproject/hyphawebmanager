@@ -1,12 +1,11 @@
 // Copyright (c) 2015-2016 HyphaRunner
 
 #include "hyphawebmanager.h"
-#include "hyphawebmanager/hyphawebmanager-version.h"
-#include "RequestHandlerFactory.h"
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include "Configuration.h"
+#include "RequestHandlerFactory.h"
+#include "hyphawebmanager/hyphawebmanager-version.h"
 
 #ifdef __linux__
 #include <fcntl.h>
@@ -47,6 +46,14 @@ using Poco::Util::HelpFormatter;
 using Poco::Net::HTTPServerParams;
 using Poco::Net::ServerSocket;
 using Poco::Net::HTTPServer;
+
+#ifndef RESOURCES_ROOT
+constexpr const char *ResourceRoot =
+    "/usr/local/share/hyphawebmanager/resources";
+#else
+constexpr const char *ResourceRoot = RESOURCES_ROOT;
+#endif
+constexpr const unsigned int DefaultPort = 9780;
 
 void HyphaWebManager::initialize(Application &self) {
   loadConfiguration();  // load default configuration files, if present
@@ -112,11 +119,15 @@ void HyphaWebManager::defineOptions(OptionSet &options) {
   options.addOption(Option("docroot", "d", "Document Root directory")
                         .required(false)
                         .repeatable(false)
-                        .argument("path"));
+                        .argument("path")
+                        .callback(OptionCallback<HyphaWebManager>(
+                            this, &HyphaWebManager::handleConfig)));
   options.addOption(Option("resroot", "r", "Resources directory")
                         .required(false)
                         .repeatable(false)
-                        .argument("path"));
+                        .argument("path")
+                        .callback(OptionCallback<HyphaWebManager>(
+                            this, &HyphaWebManager::handleConfig)));
 }
 
 void HyphaWebManager::handleHelp(const std::string &name,
@@ -137,10 +148,13 @@ void HyphaWebManager::handleConfig(const std::string &name,
   } else if (name == "password" || name == "pw") {
     Logger::info("Password given: " + value);
     config().setString("password", value);
-  } else if (name == "docroot")
+  } else if (name == "docroot" || name == "d") {
+    Logger::info("Docroot given: " + value);
     _docroot = value;
-  else if (name == "resroot")
+  } else if (name == "resroot" || name == "r") {
+    Logger::info("Resroot given: " + value);
     _resroot = value;
+  }
 }
 
 void HyphaWebManager::displayHelp() {
