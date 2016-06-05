@@ -3,10 +3,10 @@
 #include <string>
 #include <Poco/Net/HTTPRequestHandler.h>
 
-class PluginsHandler : public Poco::Net::HTTPRequestHandler
+class HandlersHandler : public Poco::Net::HTTPRequestHandler
 {
 public:
-    PluginsHandler();
+    HandlersHandler();
 
 	void handleRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
 
@@ -16,8 +16,6 @@ protected:
     void handleDELETERequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void handlePOSTRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
 
-    std::string getPlugins();
-    std::string getPluginInstances();
-    std::string getPlugin(std::string id);
-    std::string getPluginInstance(std::string id);
+    std::string getHandlers();
+    std::string getHandlerInstances();
 };

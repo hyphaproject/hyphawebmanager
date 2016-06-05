@@ -1,4 +1,5 @@
 #include "api/ApiHandler.h"
+#include "api/HandlersHandler.h"
 #include "api/PluginsHandler.h"
 
 #include <Poco/File.h>
@@ -19,7 +20,10 @@ void ApiHandler::handleRequest(Poco::Net::HTTPServerRequest& request,
   const std::string& uri = request.getURI();
 
   if (uri.find("/api/plugins") == 0) {
-      PluginsHandler pluginsHandler;
-      pluginsHandler.handleRequest(request, response);
+    PluginsHandler pluginsHandler;
+    pluginsHandler.handleRequest(request, response);
+  } else if (uri.find("/api/handlers") == 0) {
+    HandlersHandler handlersHandler;
+    handlersHandler.handleRequest(request, response);
   }
 }
