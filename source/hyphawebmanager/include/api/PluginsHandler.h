@@ -2,6 +2,7 @@
 
 #include <string>
 #include <Poco/Net/HTTPRequestHandler.h>
+#include <Poco/JSON/Object.h>
 
 class PluginsHandler : public Poco::Net::HTTPRequestHandler
 {
@@ -16,8 +17,8 @@ protected:
     void handleDELETERequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void handlePOSTRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
 
-    std::string getPlugins();
-    std::string getPluginInstances();
-    std::string getPlugin(std::string id);
-    std::string getPluginInstance(std::string id);
+    Poco::JSON::Object::Ptr getPlugins();
+    Poco::JSON::Object::Ptr getPluginInstances();
+    Poco::JSON::Object::Ptr getPlugin(std::string id);
+    Poco::JSON::Object::Ptr getPluginInstance(std::string id);
 };

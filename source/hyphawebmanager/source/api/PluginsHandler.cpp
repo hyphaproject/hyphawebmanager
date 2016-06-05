@@ -13,8 +13,8 @@
 #include <Poco/URI.h>
 
 #include <hypha/core/settings/pluginsettings.h>
-#include <hypha/plugin/pluginloader.h>
 #include <hypha/plugin/hyphaplugin.h>
+#include <hypha/plugin/pluginloader.h>
 
 using namespace std;
 using Poco::JSON::Stringifier;
@@ -41,7 +41,7 @@ void PluginsHandler::handleRequest(Poco::Net::HTTPServerRequest &request,
 void PluginsHandler::handleGETRequest(Poco::Net::HTTPServerRequest &request,
                                       Poco::Net::HTTPServerResponse &response) {
   UriParser uri(request.getURI());
-  string send;
+  Poco::JSON::Object::Ptr send;
   if (uri.isPluginInstances()) {
     std::string id = uri.getParameter("id", "");
     if (id.empty())
@@ -49,20 +49,22 @@ void PluginsHandler::handleGETRequest(Poco::Net::HTTPServerRequest &request,
     else
       send = getPluginInstance(id);
   } else if (uri.isPlugins()) {
-      std::string id = uri.getParameter("id", "");
-      if (id.empty())
-        send = getPlugins();
-      else
-        send = getPlugin(id);
+    std::string id = uri.getParameter("id", "");
+    if (id.empty())
+      send = getPlugins();
+    else
+      send = getPlugin(id);
   }
 
-  response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+  if (send->size() == 0) {
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_NOT_FOUND,
+                                "No Plugin with this ID!");
+    send->set("error", "No Plugin with this ID!");
+  } else {
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+  }
   response.setContentType("application/json");
-
-  std::ostream &ostr = response.send();
-
-  ostr << send;
-  response.setContentLength(send.size());
+  send->stringify(response.send(), 2);
 }
 
 void PluginsHandler::handlePUTRequest(Poco::Net::HTTPServerRequest &request,
@@ -78,7 +80,7 @@ void PluginsHandler::handlePOSTRequest(
     Poco::Net::HTTPServerRequest &request,
     Poco::Net::HTTPServerResponse &response) {}
 
-std::string PluginsHandler::getPlugins() {
+Poco::JSON::Object::Ptr PluginsHandler::getPlugins() {
   Object::Ptr pPlugins = new Object;
   Array::Ptr pArr = new Array;
   for (hypha::plugin::HyphaPlugin *plugin :
@@ -87,12 +89,10 @@ std::string PluginsHandler::getPlugins() {
   }
 
   pPlugins->set("plugins", pArr);
-  std::stringstream sstream;
-  pPlugins->stringify(sstream, 2);
-  return sstream.str();
+  return pPlugins;
 }
 
-string PluginsHandler::getPluginInstances() {
+Poco::JSON::Object::Ptr PluginsHandler::getPluginInstances() {
   Object::Ptr pPlugins = new Object;
   Array::Ptr pArr = new Array;
   for (std::string plugin :
@@ -101,37 +101,33 @@ string PluginsHandler::getPluginInstances() {
   }
 
   pPlugins->set("plugins", pArr);
-  std::stringstream sstream;
-  pPlugins->stringify(sstream, 2);
-  return sstream.str();
+  return pPlugins;
 }
 
-string PluginsHandler::getPlugin(string id) {
-    Object::Ptr pPlugin = new Object;
-
-    hypha::plugin::HyphaPlugin * plugin = hypha::plugin::PluginLoader::instance()->getPlugin(id);
-    if(plugin)
-    {
-        pPlugin->set("name", plugin->name());
-        pPlugin->set("description", plugin->getDescription());
-        pPlugin->set("title", plugin->getTitle());
-        pPlugin->set("configdescription", plugin->getConfigDescription());
-    }
-    std::stringstream sstream;
-    pPlugin->stringify(sstream, 2);
-    return sstream.str();
-}
-
-string PluginsHandler::getPluginInstance(string id) {
+Poco::JSON::Object::Ptr PluginsHandler::getPlugin(string id) {
   Object::Ptr pPlugin = new Object;
-  pPlugin->set("id", id);
-  pPlugin->set("type",
-               hypha::settings::PluginSettings::instance()->getName(id));
-  pPlugin->set("host",
-               hypha::settings::PluginSettings::instance()->getHost(id));
-  pPlugin->set("config",
-               hypha::settings::PluginSettings::instance()->getConfig(id));
-  std::stringstream sstream;
-  pPlugin->stringify(sstream, 2);
-  return sstream.str();
+
+  hypha::plugin::HyphaPlugin *plugin =
+      hypha::plugin::PluginLoader::instance()->getPlugin(id);
+  if (plugin) {
+    pPlugin->set("name", plugin->name());
+    pPlugin->set("description", plugin->getDescription());
+    pPlugin->set("title", plugin->getTitle());
+    pPlugin->set("configdescription", plugin->getConfigDescription());
+  }
+  return pPlugin;
+}
+
+Poco::JSON::Object::Ptr PluginsHandler::getPluginInstance(string id) {
+  Object::Ptr pPlugin = new Object;
+  std::string type = hypha::settings::PluginSettings::instance()->getName(id);
+  if (!type.empty()) {
+    pPlugin->set("id", id);
+    pPlugin->set("type", type);
+    pPlugin->set("host",
+                 hypha::settings::PluginSettings::instance()->getHost(id));
+    pPlugin->set("config",
+                 hypha::settings::PluginSettings::instance()->getConfig(id));
+  }
+  return pPlugin;
 }

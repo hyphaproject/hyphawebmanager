@@ -8,8 +8,13 @@ bool UriParser::isPluginInstances() {
   return uri.getPath() == "/api/plugins/instances";
 }
 
-std::string UriParser::getParameter(std::string key, std::string defaultValue) {
+bool UriParser::isHandlers() { return uri.getPath() == "/api/handlers"; }
 
+bool UriParser::isHandlerInstances() {
+  return uri.getPath() == "/api/handlers/instances";
+}
+
+std::string UriParser::getParameter(std::string key, std::string defaultValue) {
   for (auto parameter : uri.getQueryParameters()) {
     if (parameter.first == key) return parameter.second;
   }

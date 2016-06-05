@@ -11,6 +11,8 @@ public:
 
     bool isPlugins();
     bool isPluginInstances();
+    bool isHandlers();
+    bool isHandlerInstances();
 
     std::string getParameter(std::string key, std::string defaultValue);
 protected:

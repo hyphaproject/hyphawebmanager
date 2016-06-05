@@ -1,6 +1,6 @@
 #include "api/HandlersHandler.h"
-
 #include <strstream>
+#include "api/UriParser.h"
 
 #include <Poco/Dynamic/Var.h>
 #include <Poco/JSON/JSON.h>
@@ -39,20 +39,31 @@ void HandlersHandler::handleRequest(Poco::Net::HTTPServerRequest &request,
 void HandlersHandler::handleGETRequest(
     Poco::Net::HTTPServerRequest &request,
     Poco::Net::HTTPServerResponse &response) {
-  string send;
-  if (request.getURI() == "/api/handlers/instances/") {
-    send = getHandlerInstances();
-  } else if (request.getURI() == "/api/handlers/") {
-    send = getHandlers();
+  UriParser uri(request.getURI());
+  Object::Ptr send;
+  if (uri.isHandlerInstances()) {
+    std::string id = uri.getParameter("id", "");
+    if (id.empty())
+      send = getHandlerInstances();
+    else
+      send = getHandlerInstance(id);
+  } else if (uri.isHandlers()) {
+    std::string id = uri.getParameter("id", "");
+    if (id.empty())
+      send = getHandlers();
+    else
+      send = getHandler(id);
   }
 
-  response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+  if (send->size() == 0) {
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_NOT_FOUND,
+                                "No Handler with this ID!");
+    send->set("error", "No Handler with this ID!");
+  } else {
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+  }
   response.setContentType("application/json");
-
-  std::ostream &ostr = response.send();
-
-  ostr << send;
-  response.setContentLength(send.size());
+  send->stringify(response.send(), 2);
 }
 
 void HandlersHandler::handlePUTRequest(
@@ -67,7 +78,7 @@ void HandlersHandler::handlePOSTRequest(
     Poco::Net::HTTPServerRequest &request,
     Poco::Net::HTTPServerResponse &response) {}
 
-std::string HandlersHandler::getHandlers() {
+Object::Ptr HandlersHandler::getHandlers() {
   Object::Ptr pHandler = new Object;
   Array::Ptr pArr = new Array;
   for (hypha::handler::HyphaHandler *handler :
@@ -76,12 +87,10 @@ std::string HandlersHandler::getHandlers() {
   }
 
   pHandler->set("handlers", pArr);
-  std::stringstream sstream;
-  pHandler->stringify(sstream, 2);
-  return sstream.str();
+  return pHandler;
 }
 
-string HandlersHandler::getHandlerInstances() {
+Object::Ptr HandlersHandler::getHandlerInstances() {
   Object::Ptr pHandler = new Object;
   Array::Ptr pArr = new Array;
   for (std::string handler :
@@ -90,7 +99,33 @@ string HandlersHandler::getHandlerInstances() {
   }
 
   pHandler->set("handlers", pArr);
-  std::stringstream sstream;
-  pHandler->stringify(sstream, 2);
-  return sstream.str();
+  return pHandler;
+}
+
+Object::Ptr HandlersHandler::getHandler(string id) {
+  Object::Ptr pHandler = new Object;
+
+  hypha::handler::HyphaHandler *handler =
+      hypha::handler::HandlerLoader::instance()->getHandler(id);
+  if (handler) {
+    pHandler->set("name", handler->name());
+    pHandler->set("description", handler->getDescription());
+    pHandler->set("title", handler->getTitle());
+    pHandler->set("configdescription", handler->getConfigDescription());
+  }
+  return pHandler;
+}
+
+Object::Ptr HandlersHandler::getHandlerInstance(string id) {
+  Object::Ptr pHandler = new Object;
+  std::string type = hypha::settings::HandlerSettings::instance()->getName(id);
+  if (!type.empty()) {
+    pHandler->set("id", id);
+    pHandler->set("type", type);
+    pHandler->set("host",
+                  hypha::settings::HandlerSettings::instance()->getHost(id));
+    pHandler->set("config",
+                  hypha::settings::HandlerSettings::instance()->getConfig(id));
+  }
+  return pHandler;
 }

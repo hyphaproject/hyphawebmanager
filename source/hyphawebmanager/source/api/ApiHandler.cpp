@@ -1,4 +1,5 @@
 #include "api/ApiHandler.h"
+#include "api/UriParser.h"
 #include "api/HandlersHandler.h"
 #include "api/PluginsHandler.h"
 
@@ -17,13 +18,16 @@ ApiHandler::ApiHandler() {}
 
 void ApiHandler::handleRequest(Poco::Net::HTTPServerRequest& request,
                                Poco::Net::HTTPServerResponse& response) {
-  const std::string& uri = request.getURI();
+    UriParser uri(request.getURI());
 
-  if (uri.find("/api/plugins") == 0) {
+  if (uri.isPlugins() || uri.isPluginInstances()) {
     PluginsHandler pluginsHandler;
     pluginsHandler.handleRequest(request, response);
-  } else if (uri.find("/api/handlers") == 0) {
+  } else if (uri.isHandlers() || uri.isHandlerInstances()) {
     HandlersHandler handlersHandler;
     handlersHandler.handleRequest(request, response);
+  }else{
+      NotFoundHandler notFoundHandler;
+      notFoundHandler.handleRequest(request, response);
   }
 }
