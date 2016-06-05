@@ -26,7 +26,7 @@ set(DEFAULT_PROJECT_OPTIONS
 )
 
 find_package(Boost COMPONENTS signals thread system filesystem REQUIRED)
-find_package(Poco COMPONENTS Foundation Util Net Data DataMySQL DataSQLite REQUIRED)
+find_package(Poco COMPONENTS Foundation JSON Util Net Data DataMySQL DataSQLite REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Widgets REQUIRED)

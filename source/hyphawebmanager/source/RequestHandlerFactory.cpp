@@ -1,6 +1,7 @@
 #include "RequestHandlerFactory.h"
 #include "Index.h"
 #include "ResourceHandler.h"
+#include "api/ApiHandler.h"
 
 #include <Poco/Net/HTTPRequestHandler.h>
 #include <Poco/Net/HTTPServerRequest.h>
@@ -33,6 +34,8 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
     return new ResourceHandler(_docroot, _resroot);
   } else if (uri.find("/fonts/") == 0) {
     return new ResourceHandler(_docroot, _resroot);
+  } else if (uri.find("/api/") == 0) {
+      return new ApiHandler();
   }
 
   return nullptr;

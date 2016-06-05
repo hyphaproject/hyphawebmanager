@@ -47,10 +47,12 @@ set(resource_path  "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 
 file(GLOB headers
 "${include_path}/*.h"
+"${include_path}/api/*.h"
 )
 
 file(GLOB sources
 "${source_path}/*.cpp"
+"${source_path}/api/*.cpp"
 )
 
 file(GLOB cpsp_sources

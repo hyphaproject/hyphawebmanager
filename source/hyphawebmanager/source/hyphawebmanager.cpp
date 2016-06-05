@@ -69,23 +69,57 @@ void HyphaWebManager::uninitialize() {
 int HyphaWebManager::main(const std::vector<std::string> &args) {
   if (_helpRequested) return Application::EXIT_USAGE;
 
-  unsigned short port = (unsigned short)config().getInt("port", DefaultPort);
+  try {
+    HyphaSettings::loadInstance(
+        config().getString("config-file", "hypha.conf"));
+    Logger::info("\nLoading Database Settings ...\n");
+    DatabaseSettings::instance();
+    UserDatabaseSettings::instance();
+    Logger::info(UserDatabaseSettings::instance()->getDatabase());
+    Logger::info("Loading Database ...");
+    UserDatabase::instance();
 
-  HTTPServerParams *params = new HTTPServerParams;
-  params->setServerName(HYPHAWEBMANAGER_PROJECT_NAME);
-  params->setSoftwareVersion(HYPHAWEBMANAGER_VERSION);
+    std::string stdHandlersDir;
+    std::string stdPluginsDir;
+#ifdef __linux__
+    stdHandlersDir = "/usr/local/lib/hyphahandlers";
+    stdPluginsDir = "/usr/local/lib/hyphaplugins";
+#else
+    stdHandlersDir = "../hyphahandlers";
+    stdPluginsDir = "../hyphaplugins";
+#endif
 
-  // set-up a server socket
-  ServerSocket svs(port);
+    Logger::info("Loading Handler ...");
+    HandlerLoader::instance()->loadHandlers(
+        config().getString("handlersdir", stdHandlersDir));
+    Logger::info("Loading Plugins ...");
+    PluginLoader::instance()->loadPlugins(
+        config().getString("pluginsdir", stdPluginsDir));
 
-  // set-up a HTTPServer instance
-  HTTPServer srv(new RequestHandlerFactory(_docroot, _resroot), svs, params);
-  // start the HTTPServer
-  srv.start();
-  // wait for CTRL-C or kill
-  waitForTerminationRequest();
-  // Stop the HTTPServer
-  srv.stop();
+    unsigned short port = (unsigned short)config().getInt("port", DefaultPort);
+
+    HTTPServerParams *params = new HTTPServerParams;
+    params->setServerName(HYPHAWEBMANAGER_PROJECT_NAME);
+    params->setSoftwareVersion(HYPHAWEBMANAGER_VERSION);
+
+    // set-up a server socket
+    ServerSocket svs(port);
+
+    // set-up a HTTPServer instance
+    HTTPServer srv(new RequestHandlerFactory(_docroot, _resroot), svs, params);
+    // start the HTTPServer
+    srv.start();
+    // wait for CTRL-C or kill
+    waitForTerminationRequest();
+    // Stop the HTTPServer
+    srv.stop();
+  } catch (Poco::Exception &e) {
+    Logger::fatal(e.what());
+  } catch (std::exception &e) {
+    Logger::fatal(e.what());
+  } catch (...) {
+    Logger::fatal("unknown Exception");
+  }
 
   return Application::EXIT_OK;
 }
@@ -128,6 +162,25 @@ void HyphaWebManager::defineOptions(OptionSet &options) {
                         .argument("path")
                         .callback(OptionCallback<HyphaWebManager>(
                             this, &HyphaWebManager::handleConfig)));
+  options.addOption(
+      Option("config-file", "f", "load configuration data from a file")
+          .required(false)
+          .repeatable(false)
+          .argument("file")
+          .callback(OptionCallback<HyphaWebManager>(
+              this, &HyphaWebManager::handleConfig)));
+  options.addOption(Option("handlersdir", "hd", "location for handlers")
+                        .required(false)
+                        .repeatable(false)
+                        .argument("dir")
+                        .callback(OptionCallback<HyphaWebManager>(
+                            this, &HyphaWebManager::handleConfig)));
+  options.addOption(Option("pluginsdir", "pd", "location for plugins")
+                        .required(false)
+                        .repeatable(false)
+                        .argument("dir")
+                        .callback(OptionCallback<HyphaWebManager>(
+                            this, &HyphaWebManager::handleConfig)));
 }
 
 void HyphaWebManager::handleHelp(const std::string &name,
@@ -154,6 +207,15 @@ void HyphaWebManager::handleConfig(const std::string &name,
   } else if (name == "resroot" || name == "r") {
     Logger::info("Resroot given: " + value);
     _resroot = value;
+  } else if (name == "config-file" || name == "f") {
+    Logger::info("Loading Config from File: " + value);
+    config().setString("config-file", value);
+  } else if (name == "handlersdir" || name == "hd") {
+    Logger::info("Loading Handlers from dir: " + value);
+    config().setString("handlersdir", value);
+  } else if (name == "pluginsdir" || name == "pd") {
+    Logger::info("Loading Plugins from dir: " + value);
+    config().setString("pluginsdir", value);
   }
 }
 
