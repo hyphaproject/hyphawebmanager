@@ -1,6 +1,8 @@
-<%@ page class="Index" %>
+<%@ page class="HandlersPage" %>
 <%!
 #include "hyphawebmanager/hyphawebmanager-version.h"
+#include <hypha/core/settings/handlersettings.h>
+#include <hypha/handler/handlerloader.h>
 %>
 <%
     std::string projectName(HYPHAWEBMANAGER_PROJECT_NAME);
@@ -43,13 +45,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#"><%=projectName%></a>
+          <a class="navbar-brand" href="/"><%=projectName%></a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">Home</a></li>
         <li><a href="plugins">Plugins</a></li>
-        <li><a href="handlers">Handlers</a></li>
+        <li class="active"><a href="handlers">Handlers</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
@@ -60,10 +62,19 @@
     <div class="container">
 
       <div class="starter-template">
-        <h1>Index of <%=request.getURI()%></h1>
+        <h1><%=request.getURI()%></h1>
         <hr>
         <table>
-
+<%
+        for (hypha::handler::HyphaHandler *handler :hypha::handler::HandlerLoader::instance()->getHandlers()) {
+          %>
+        <tr>
+        <td><%= handler->name()%></td>
+        <td><%= handler->getDescription()%></td>
+        </tr>
+        <%
+        }
+%>
         </table>
       </div>
 

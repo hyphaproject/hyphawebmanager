@@ -1,6 +1,9 @@
-<%@ page class="Index" %>
+<%@ page class="PluginsPage" %>
 <%!
 #include "hyphawebmanager/hyphawebmanager-version.h"
+#include <hypha/core/settings/pluginsettings.h>
+#include <hypha/plugin/hyphaplugin.h>
+#include <hypha/plugin/pluginloader.h>
 %>
 <%
     std::string projectName(HYPHAWEBMANAGER_PROJECT_NAME);
@@ -43,12 +46,12 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#"><%=projectName%></a>
+          <a class="navbar-brand" href="/"><%=projectName%></a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-        <li><a href="plugins">Plugins</a></li>
+            <li><a href="#">Home</a></li>
+        <li class="active"><a href="plugins">Plugins</a></li>
         <li><a href="handlers">Handlers</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -60,10 +63,19 @@
     <div class="container">
 
       <div class="starter-template">
-        <h1>Index of <%=request.getURI()%></h1>
+        <h1><%=request.getURI()%></h1>
         <hr>
         <table>
-
+<%
+        for (hypha::plugin::HyphaPlugin *plugin :hypha::plugin::PluginLoader::instance()->getPlugins()) {
+          %>
+        <tr>
+        <td><%= plugin->name()%></td>
+        <td><%= plugin->getDescription()%></td>
+        </tr>
+        <%
+        }
+%>
         </table>
       </div>
 
