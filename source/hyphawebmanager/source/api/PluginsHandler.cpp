@@ -6,15 +6,18 @@
 #include <Poco/JSON/JSON.h>
 #include <Poco/JSON/Object.h>
 #include <Poco/JSON/Stringifier.h>
+#include <Poco/Net/HTMLForm.h>
 #include <Poco/Net/HTTPResponse.h>
 #include <Poco/Net/HTTPServerRequest.h>
 #include <Poco/Net/HTTPServerResponse.h>
 #include <Poco/RegularExpression.h>
 #include <Poco/URI.h>
 
+#include <hypha/controller/plugin.h>
 #include <hypha/core/settings/pluginsettings.h>
 #include <hypha/plugin/hyphaplugin.h>
 #include <hypha/plugin/pluginloader.h>
+#include <hypha/utils/logger.h>
 
 using namespace std;
 using Poco::JSON::Stringifier;
@@ -31,11 +34,11 @@ void PluginsHandler::handleRequest(Poco::Net::HTTPServerRequest &request,
   if (request.getMethod() == "GET")
     handleGETRequest(request, response);
   else if (request.getMethod() == "PUT")
-    handleGETRequest(request, response);
+    handlePUTRequest(request, response);
   else if (request.getMethod() == "DELETE")
-    handleGETRequest(request, response);
+    handleDELETERequest(request, response);
   else if (request.getMethod() == "POST")
-    handleGETRequest(request, response);
+    handlePOSTRequest(request, response);
 }
 
 void PluginsHandler::handleGETRequest(Poco::Net::HTTPServerRequest &request,
@@ -78,7 +81,37 @@ void PluginsHandler::handleDELETERequest(
 
 void PluginsHandler::handlePOSTRequest(
     Poco::Net::HTTPServerRequest &request,
-    Poco::Net::HTTPServerResponse &response) {}
+    Poco::Net::HTTPServerResponse &response) {
+  try {
+    Poco::Net::HTMLForm form(request, request.stream());
+
+    std::string id = form["id"];
+    std::string type = form["type"];
+    std::string host = form["host"];
+    if (id.empty() || type.empty()) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+
+    if (hypha::plugin::PluginLoader::instance()->getPlugin(type) == nullptr) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+
+    hypha::controller::Plugin con(hypha::database::Database::instance());
+    con.add(id, host, type, "{}");
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+    response.send();
+    return;
+  } catch (Poco::Exception &e) {
+    hypha::utils::Logger::error(e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, e.what());
+    response.send();
+    return;
+  }
+}
 
 Poco::JSON::Object::Ptr PluginsHandler::getPlugins() {
   Object::Ptr pPlugins = new Object;

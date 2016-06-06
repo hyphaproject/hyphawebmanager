@@ -71,7 +71,7 @@ int HyphaWebManager::main(const std::vector<std::string> &args) {
 
   try {
     HyphaSettings::loadInstance(
-        config().getString("config-file", "hypha.conf"));
+        config().getString("config-file", "/etc/hypha/hypha.conf"));
     Logger::info("\nLoading Database Settings ...\n");
     DatabaseSettings::instance();
     UserDatabaseSettings::instance();

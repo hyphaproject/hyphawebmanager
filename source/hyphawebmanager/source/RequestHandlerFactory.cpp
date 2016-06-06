@@ -1,5 +1,6 @@
 #include "RequestHandlerFactory.h"
 #include "Index.h"
+#include "ConnectionsPage.h"
 #include "PluginsPage.h"
 #include "HandlersPage.h"
 #include "ResourceHandler.h"
@@ -34,6 +35,8 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
     return new PluginsPage;
   } else if (uri == "/handlers") {
     return new HandlersPage;
+  } else if (uri == "/connections") {
+    return new ConnectionsPage;
   } else if (uri.find("/css/") == 0) {
     return new ResourceHandler(_docroot, _resroot);
   } else if (uri.find("/js/") == 0) {

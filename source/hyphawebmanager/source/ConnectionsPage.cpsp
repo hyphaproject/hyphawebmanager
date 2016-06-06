@@ -1,13 +1,15 @@
-<%@ page class="PluginsPage" %>
+<%@ page class="ConnectionsPage" %>
 <%!
 #include "hyphawebmanager/hyphawebmanager-version.h"
-#include <hypha/core/settings/pluginsettings.h>
-#include <hypha/plugin/hyphaplugin.h>
+#include <hypha/core/database/database.h>
+#include <hypha/controller/connection.h>
+#include <hypha/handler/handlerloader.h>
 #include <hypha/plugin/pluginloader.h>
 %>
 <%
     std::string projectName(HYPHAWEBMANAGER_PROJECT_NAME);
     std::string projectVersion(HYPHAWEBMANAGER_VERSION);
+    hypha::controller::Connection con(hypha::database::Database::instance());
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,6 +35,7 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+
   </head>
 
   <body>
@@ -52,8 +55,8 @@
           <ul class="nav navbar-nav">
             <li><a href="#">Home</a></li>
         <li><a href="handlers">Handlers</a></li>
-        <li class="active"><a href="plugins">Plugins</a></li>
-        <li><a href="connections">Connections</a></li>
+        <li><a href="plugins">Plugins</a></li>
+        <li class="active"><a href="connections">Connections</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
@@ -64,26 +67,30 @@
     <div class="container">
 
         <div class="form-group">
-        <select id="plugins" name="plugins" class="form-control">
+        <select id="handlers" name="handlers" class="form-control">
 <%
 
-        for (hypha::plugin::HyphaPlugin *plugin :
-             hypha::plugin::PluginLoader::instance()->getPlugins()) {
+          for (std::string handler :
+                hypha::settings::HandlerSettings::instance()->getAllHandlerIds()) {
           %>
-        <option value="<%= plugin->name() %>"><%= plugin->name() %></option>
+        <option value="<%= handler %>"><%= handler %></option>
 <%
 }
 %>
         </select>
-        <div class="form-group">
-          <label for="pluginid">ID:</label>
-          <input type="text" class="form-control" id="pluginid">
-        </div>
-        <div class="form-group">
-          <label for="host">Host:</label>
-          <input type="text" class="form-control" id="host">
-        </div>
-        <button id="createpluginbutton" type="button" class="btn btn-default">Create</button>
+        <select id="plugins" name="plugins" class="form-control">
+<%
+
+           for (std::string plugin :
+                hypha::settings::PluginSettings::instance()->getAllPluginIds()) {
+
+          %>
+        <option value="<%= plugin %>"><%= plugin %></option>
+<%
+}
+%>
+        </select>
+        <button id="connectbutton" type="button" class="btn btn-default">Connect</button>
         </div>
 
       <div class="starter-template">
@@ -91,11 +98,17 @@
         <hr>
         <table>
 <%
-        for (hypha::plugin::HyphaPlugin *plugin :hypha::plugin::PluginLoader::instance()->getPlugins()) {
+        for (std::tuple<std::string, std::string, std::string> connection :
+             con.getConnections()) {
+        std::string id = std::get<0>(connection);
+        std::string handler = std::get<1>(connection);
+        std::string plugin = std::get<2>(connection);
+
           %>
         <tr>
-        <td><%= plugin->name()%></td>
-        <td><%= plugin->getDescription()%></td>
+        <td><%= id %></td>
+        <td><%= handler %></td>
+        <td><%= plugin %></td>
         </tr>
         <%
         }
@@ -115,14 +128,13 @@
     <script src="/js/ie10-viewport-bug-workaround.js"></script>
     <script src="/js/hyphaapi.js"></script>
     <script>
-                $(document).ready(function(){
-                $("#createpluginbutton").click(function(){
-                var vpluginid = $("#pluginid").val();
-                var vhost = $("#host").val();
-                var vtype = $("#plugins").val();
-                hCreatePlugin(vpluginid, vtype, vhost);
-                                      });
-                })
+            $(document).ready(function(){
+            $("#connectbutton").click(function(){
+            var vhandler = $("#handlers").val();
+            var vplugin = $("#plugins").val();
+            hCreateConnection(vhandler, vplugin);
+                                  });
+            })
     </script>
   </body>
 </html>

@@ -29,11 +29,11 @@ void HandlersHandler::handleRequest(Poco::Net::HTTPServerRequest &request,
   if (request.getMethod() == "GET")
     handleGETRequest(request, response);
   else if (request.getMethod() == "PUT")
-    handleGETRequest(request, response);
+    handlePUTRequest(request, response);
   else if (request.getMethod() == "DELETE")
-    handleGETRequest(request, response);
+    handleDELETERequest(request, response);
   else if (request.getMethod() == "POST")
-    handleGETRequest(request, response);
+    handlePOSTRequest(request, response);
 }
 
 void HandlersHandler::handleGETRequest(

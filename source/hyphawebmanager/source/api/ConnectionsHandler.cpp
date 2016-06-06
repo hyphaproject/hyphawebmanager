@@ -14,8 +14,10 @@
 
 #include <hypha/controller/connection.h>
 #include <hypha/core/settings/pluginsettings.h>
+#include <hypha/handler/handlerloader.h>
 #include <hypha/plugin/hyphaplugin.h>
 #include <hypha/plugin/pluginloader.h>
+#include <hypha/utils/logger.h>
 
 using namespace std;
 using Poco::JSON::Stringifier;
@@ -33,11 +35,11 @@ void ConnectionsHandler::handleRequest(
   if (request.getMethod() == "GET")
     handleGETRequest(request, response);
   else if (request.getMethod() == "PUT")
-    handleGETRequest(request, response);
+    handlePUTRequest(request, response);
   else if (request.getMethod() == "DELETE")
-    handleGETRequest(request, response);
+    handleDELETERequest(request, response);
   else if (request.getMethod() == "POST")
-    handleGETRequest(request, response);
+    handlePOSTRequest(request, response);
 }
 
 void ConnectionsHandler::handleGETRequest(
@@ -72,7 +74,38 @@ void ConnectionsHandler::handleDELETERequest(
 
 void ConnectionsHandler::handlePOSTRequest(
     Poco::Net::HTTPServerRequest &request,
-    Poco::Net::HTTPServerResponse &response) {}
+    Poco::Net::HTTPServerResponse &response) {
+  try {
+    UriParser uri(request.getURI());
+    std::string handler = uri.getParameter("handler", "");
+    std::string plugin = uri.getParameter("plugin", "");
+    if (handler.empty() || plugin.empty()) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+
+    if (hypha::handler::HandlerLoader::instance()->getHandlerInstance(
+            handler) == nullptr ||
+        hypha::plugin::PluginLoader::instance()->getPluginInstance(plugin) ==
+            nullptr) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+
+    hypha::controller::Connection con(hypha::database::Database::instance());
+    con.create(handler, plugin);
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+    response.send();
+    return;
+  } catch (Poco::Exception &e) {
+    hypha::utils::Logger::error(e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, e.what());
+    response.send();
+    return;
+  }
+}
 
 Poco::JSON::Object::Ptr ConnectionsHandler::getConnections() {
   Object::Ptr pConnection = new Object;
