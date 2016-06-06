@@ -1,7 +1,8 @@
 #include "api/ApiHandler.h"
-#include "api/UriParser.h"
+#include "api/ConnectionsHandler.h"
 #include "api/HandlersHandler.h"
 #include "api/PluginsHandler.h"
+#include "api/UriParser.h"
 
 #include <Poco/File.h>
 #include <Poco/Net/HTTPServerRequest.h>
@@ -18,7 +19,7 @@ ApiHandler::ApiHandler() {}
 
 void ApiHandler::handleRequest(Poco::Net::HTTPServerRequest& request,
                                Poco::Net::HTTPServerResponse& response) {
-    UriParser uri(request.getURI());
+  UriParser uri(request.getURI());
 
   if (uri.isPlugins() || uri.isPluginInstances()) {
     PluginsHandler pluginsHandler;
@@ -26,8 +27,11 @@ void ApiHandler::handleRequest(Poco::Net::HTTPServerRequest& request,
   } else if (uri.isHandlers() || uri.isHandlerInstances()) {
     HandlersHandler handlersHandler;
     handlersHandler.handleRequest(request, response);
-  }else{
-      NotFoundHandler notFoundHandler;
-      notFoundHandler.handleRequest(request, response);
+  } else if (uri.isConnections()) {
+    ConnectionsHandler connectionsHandler;
+    connectionsHandler.handleRequest(request, response);
+  } else {
+    NotFoundHandler notFoundHandler;
+    notFoundHandler.handleRequest(request, response);
   }
 }

@@ -13,6 +13,7 @@ public:
     bool isPluginInstances();
     bool isHandlers();
     bool isHandlerInstances();
+    bool isConnections();
 
     std::string getParameter(std::string key, std::string defaultValue);
 protected:
