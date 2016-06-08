@@ -9,3 +9,7 @@ function hCreateConnection(vhandler, vplugin) {
 function hCreatePlugin(vpluginid, vtype, vhost) {
 	$.post("/api/plugins", { id:vpluginid, type:vtype, host:vhost}, function(response,status){})
 }
+
+function hCreateHandler(vhandlerid, vtype, vhost) {
+	$.post("/api/handlers", { id:vhandlerid, type:vtype, host:vhost}, function(response,status){})
+}

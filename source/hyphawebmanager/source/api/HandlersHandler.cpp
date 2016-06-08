@@ -6,13 +6,17 @@
 #include <Poco/JSON/JSON.h>
 #include <Poco/JSON/Object.h>
 #include <Poco/JSON/Stringifier.h>
+#include <Poco/Net/HTMLForm.h>
 #include <Poco/Net/HTTPResponse.h>
 #include <Poco/Net/HTTPServerRequest.h>
 #include <Poco/Net/HTTPServerResponse.h>
 #include <Poco/RegularExpression.h>
+#include <Poco/URI.h>
 
+#include <hypha/controller/handler.h>
 #include <hypha/core/settings/handlersettings.h>
 #include <hypha/handler/handlerloader.h>
+#include <hypha/utils/logger.h>
 
 using namespace std;
 using Poco::JSON::Stringifier;
@@ -76,7 +80,37 @@ void HandlersHandler::handleDELETERequest(
 
 void HandlersHandler::handlePOSTRequest(
     Poco::Net::HTTPServerRequest &request,
-    Poco::Net::HTTPServerResponse &response) {}
+    Poco::Net::HTTPServerResponse &response) {
+    try {
+      Poco::Net::HTMLForm form(request, request.stream());
+
+      std::string id = form["id"];
+      std::string type = form["type"];
+      std::string host = form["host"];
+      if (id.empty() || type.empty()) {
+        response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+        response.send();
+        return;
+      }
+
+      if (hypha::handler::HandlerLoader::instance()->getHandler(type) == nullptr) {
+        response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+        response.send();
+        return;
+      }
+
+      hypha::controller::Handler con(hypha::database::Database::instance());
+      con.add(id, host, type, "{}");
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+      response.send();
+      return;
+    } catch (Poco::Exception &e) {
+      hypha::utils::Logger::error(e.what());
+      response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, e.what());
+      response.send();
+      return;
+    }
+}
 
 Object::Ptr HandlersHandler::getHandlers() {
   Object::Ptr pHandler = new Object;
