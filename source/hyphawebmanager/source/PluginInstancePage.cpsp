@@ -1,11 +1,23 @@
-<%@ page class="PluginsPage" %>
+<%@ page class="PluginInstancePage" %>
 <%!
 #include "hyphawebmanager/hyphawebmanager-version.h"
+#include "api/UriParser.h"
+
 #include <hypha/core/settings/pluginsettings.h>
 #include <hypha/plugin/hyphaplugin.h>
+#include <hypha/plugin/hyphaplugin.h>
 #include <hypha/plugin/pluginloader.h>
+
+#include <confdesc/confdesc.h>
+#include <confdesc/datatypes.h>
 %>
 <%
+    UriParser uri(request.getURI());
+    std::string pluginId = uri.getParameter("id", "");
+
+    std::string pluginType = hypha::settings::PluginSettings::instance()->getName(pluginId);
+    hypha::plugin::HyphaPlugin* plugin = hypha::plugin::PluginLoader::instance()->getPlugin(pluginType);
+    cd::ConfDesc desc(plugin->getConfigDescription());
     std::string projectName(HYPHAWEBMANAGER_PROJECT_NAME);
     std::string projectVersion(HYPHAWEBMANAGER_VERSION);
 %>
@@ -62,63 +74,56 @@
     </nav>
 
     <div class="container">
-        <div class="starter-template">
-                <h1><%=request.getURI()%></h1>
-
+        <h1><%=pluginId%> - <%=plugin->name()%></h1>
+        <h2><%=plugin->getDescription()%></h2>
         <hr>
-        <table>
-<%
-        for (std::string plugin :
-             hypha::settings::PluginSettings::instance()->getAllPluginIds()) {
-          %>
-        <tr>
-        <td><a href="/plugins/instance?id=<%= plugin%>" ><%= plugin%></a></td>
-
-        </tr>
-        <%
-        }
-%>
-        </table>
-        <hr>
-
-        <table>
-<%
-        for (hypha::plugin::HyphaPlugin *plugin :hypha::plugin::PluginLoader::instance()->getPlugins()) {
-          %>
-        <tr>
-        <td><%= plugin->name()%></td>
-        <td><%= plugin->getDescription()%></td>
-        </tr>
-        <%
-        }
-%>
-        </table>
-        <hr>
-
         <div class="form-group">
-        <select id="plugins" name="plugins" class="form-control">
-<%
 
-        for (hypha::plugin::HyphaPlugin *plugin :
-             hypha::plugin::PluginLoader::instance()->getPlugins()) {
-          %>
-        <option value="<%= plugin->name() %>"><b><%= plugin->name() %></b> - <%= plugin->getDescription() %></option>
 <%
+        for (const auto& items : desc) {
+          cd::ConfigItem item = items.second;
+
+          switch (item.getType()) {
+        case cd::DataType::BOOLEAN: {
+      %>
+        <div class="checkbox">
+        <label>
+        <input type="checkbox" checked="<%= item.getValue<bool>() %>">
+        <%= item.getDescription()%>
+        </label>
+        </div>
+<%
+    } break;
+        case cd::DataType::FLOAT: {
+      %>
+        <fieldset class="form-group">
+            <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
+            <input type="number" class="form-control" id="<%= item.getName()%>" value="<%= item.getValue<double>() %>">
+          </fieldset>
+<%
+    } break;
+        case cd::DataType::INTEGER: {
+      %>
+        <fieldset class="form-group">
+            <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
+            <input type="number" class="form-control" id="<%= item.getName()%>" value="<%= item.getValue<int>() %>">
+          </fieldset>
+<%
+    } break;
+        case cd::DataType::STRING: {
+      %>
+        <fieldset class="form-group">
+            <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
+            <input type="text" class="form-control" id="<%= item.getName()%>" value="<%= item.getValue<std::string>() %>">
+          </fieldset>
+<%
+    } break;
+
+     }
 }
 %>
-        </select>
-        <div class="form-group">
-          <label for="pluginid">ID:</label>
-          <input type="text" class="form-control" id="pluginid">
+        <button id="savebutton" type="button" class="btn btn-default">Save</button>
         </div>
-        <div class="form-group">
-          <label for="host">Host:</label>
-          <input type="text" class="form-control" id="host">
-        </div>
-        <button id="createpluginbutton" type="button" class="btn btn-default">Create</button>
-        </div>
-      </div>
-
 
     </div><!-- /.container -->
 
@@ -133,7 +138,7 @@
     <script src="/js/hyphaapi.js"></script>
     <script>
                 $(document).ready(function(){
-                $("#createpluginbutton").click(function(){
+                $("#savebutton").click(function(){
                 var vpluginid = $("#pluginid").val();
                 var vhost = $("#host").val();
                 var vtype = $("#plugins").val();

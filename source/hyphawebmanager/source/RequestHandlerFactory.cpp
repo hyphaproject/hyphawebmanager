@@ -1,8 +1,9 @@
 #include "RequestHandlerFactory.h"
-#include "Index.h"
 #include "ConnectionsPage.h"
-#include "PluginsPage.h"
 #include "HandlersPage.h"
+#include "Index.h"
+#include "PluginsPage.h"
+#include "PluginInstancePage.h"
 #include "ResourceHandler.h"
 #include "api/ApiHandler.h"
 
@@ -31,6 +32,8 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
 
   if (uri == "/") {
     return new Index;
+  } else if (uri.find("/plugins/instance") == 0) {
+    return new PluginInstancePage;
   } else if (uri == "/plugins") {
     return new PluginsPage;
   } else if (uri == "/handlers") {
