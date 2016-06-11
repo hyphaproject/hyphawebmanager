@@ -72,12 +72,56 @@ void PluginsHandler::handleGETRequest(Poco::Net::HTTPServerRequest &request,
 
 void PluginsHandler::handlePUTRequest(Poco::Net::HTTPServerRequest &request,
                                       Poco::Net::HTTPServerResponse &response) {
+  try {
+    Poco::Net::HTMLForm form(request, request.stream());
 
+    std::string id = form["id"];
+    std::string config = form["config"];
+    if (id.empty()) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+
+    hypha::controller::Plugin con(hypha::database::Database::instance());
+    con.updateConfig(id, config);
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+    response.send();
+    return;
+  } catch (Poco::Exception &e) {
+    hypha::utils::Logger::error(e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST,
+                                e.what());
+    response.send();
+    return;
+  }
 }
 
 void PluginsHandler::handleDELETERequest(
     Poco::Net::HTTPServerRequest &request,
-    Poco::Net::HTTPServerResponse &response) {}
+    Poco::Net::HTTPServerResponse &response) {
+  try {
+    Poco::Net::HTMLForm form(request, request.stream());
+
+    std::string id = form["id"];
+    if (id.empty()) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+    hypha::controller::Plugin con(hypha::database::Database::instance());
+    con.remove(id);
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+    response.send();
+    return;
+  } catch (Poco::Exception &e) {
+    hypha::utils::Logger::error(e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST,
+                                e.what());
+    response.send();
+    return;
+  }
+}
 
 void PluginsHandler::handlePOSTRequest(
     Poco::Net::HTTPServerRequest &request,
@@ -107,7 +151,8 @@ void PluginsHandler::handlePOSTRequest(
     return;
   } catch (Poco::Exception &e) {
     hypha::utils::Logger::error(e.what());
-    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST,
+                                e.what());
     response.send();
     return;
   }

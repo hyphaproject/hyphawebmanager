@@ -76,40 +76,64 @@ void HandlersHandler::handlePUTRequest(
 
 void HandlersHandler::handleDELETERequest(
     Poco::Net::HTTPServerRequest &request,
-    Poco::Net::HTTPServerResponse &response) {}
+    Poco::Net::HTTPServerResponse &response) {
+  try {
+    Poco::Net::HTMLForm form(request, request.stream());
+
+    std::string id = form["id"];
+    if (id.empty()) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+    hypha::controller::Handler con(hypha::database::Database::instance());
+    con.remove(id);
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+    response.send();
+    return;
+  } catch (Poco::Exception &e) {
+    hypha::utils::Logger::error(e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST,
+                                e.what());
+    response.send();
+    return;
+  }
+}
 
 void HandlersHandler::handlePOSTRequest(
     Poco::Net::HTTPServerRequest &request,
     Poco::Net::HTTPServerResponse &response) {
-    try {
-      Poco::Net::HTMLForm form(request, request.stream());
+  try {
+    Poco::Net::HTMLForm form(request, request.stream());
 
-      std::string id = form["id"];
-      std::string type = form["type"];
-      std::string host = form["host"];
-      if (id.empty() || type.empty()) {
-        response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
-        response.send();
-        return;
-      }
-
-      if (hypha::handler::HandlerLoader::instance()->getHandler(type) == nullptr) {
-        response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
-        response.send();
-        return;
-      }
-
-      hypha::controller::Handler con(hypha::database::Database::instance());
-      con.add(id, host, type, "{}");
-      response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-      response.send();
-      return;
-    } catch (Poco::Exception &e) {
-      hypha::utils::Logger::error(e.what());
-      response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, e.what());
+    std::string id = form["id"];
+    std::string type = form["type"];
+    std::string host = form["host"];
+    if (id.empty() || type.empty()) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
       response.send();
       return;
     }
+
+    if (hypha::handler::HandlerLoader::instance()->getHandler(type) ==
+        nullptr) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+
+    hypha::controller::Handler con(hypha::database::Database::instance());
+    con.add(id, host, type, "{}");
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+    response.send();
+    return;
+  } catch (Poco::Exception &e) {
+    hypha::utils::Logger::error(e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST,
+                                e.what());
+    response.send();
+    return;
+  }
 }
 
 Object::Ptr HandlersHandler::getHandlers() {

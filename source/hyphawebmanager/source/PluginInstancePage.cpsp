@@ -88,7 +88,7 @@
       %>
         <div class="checkbox">
         <label>
-        <input type="checkbox" checked="<%= item.getValue<bool>() %>">
+        <input id="<%= item.getName()%>" type="checkbox" checked="<%= item.getValue<bool>() %>">
         <%= item.getDescription()%>
         </label>
         </div>
@@ -139,10 +139,18 @@
     <script>
                 $(document).ready(function(){
                 $("#savebutton").click(function(){
-                var vpluginid = $("#pluginid").val();
-                var vhost = $("#host").val();
-                var vtype = $("#plugins").val();
-                hCreatePlugin(vpluginid, vtype, vhost);
+                var vpluginid = '<%=pluginId%>';
+                var vconfig = '{'+
+<%
+                for (const auto& items : desc) {
+                cd::ConfigItem item = items.second;
+%>
+                      $("#<%=item.getName() %>").val()+','
+<%
+                }
+%>
+                                          +'}';
+                hUpdatePluginConfig(vpluginid, vconfig);
                                       });
                 })
     </script>
