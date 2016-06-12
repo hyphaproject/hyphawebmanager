@@ -1,25 +1,24 @@
-<%@ page class="PluginInstancePage" %>
+<%@ page class="HandlerInstancePage" %>
 <%!
 #include "hyphawebmanager/hyphawebmanager-version.h"
 #include "api/UriParser.h"
 
 #include <hypha/core/settings/pluginsettings.h>
-#include <hypha/plugin/hyphaplugin.h>
-#include <hypha/plugin/hyphaplugin.h>
-#include <hypha/plugin/pluginloader.h>
-#include <hypha/controller/plugin.h>
+#include <hypha/handler/hyphahandler.h>
+#include <hypha/handler/handlerloader.h>
+#include <hypha/controller/handler.h>
 
 #include <confdesc/confdesc.h>
 #include <confdesc/datatypes.h>
 %>
 <%
     UriParser uri(request.getURI());
-    std::string pluginId = uri.getParameter("id", "");
+    std::string handlerId = uri.getParameter("id", "");
 
-    std::string pluginType = hypha::settings::PluginSettings::instance()->getName(pluginId);
-    hypha::plugin::HyphaPlugin* plugin = hypha::plugin::PluginLoader::instance()->getPlugin(pluginType);
-    cd::ConfDesc desc(plugin->getConfigDescription());
-    hypha::controller::Plugin pluginController(hypha::database::Database::instance());
+    std::string handlerType = hypha::settings::HandlerSettings::instance()->getName(handlerId);
+    hypha::handler::HyphaHandler* handler = hypha::handler::HandlerLoader::instance()->getHandler(handlerType);
+    cd::ConfDesc desc(handler->getConfigDescription());
+    hypha::controller::Handler handlerController(hypha::database::Database::instance());
 
     std::string projectName(HYPHAWEBMANAGER_PROJECT_NAME);
     std::string projectVersion(HYPHAWEBMANAGER_VERSION);
@@ -66,8 +65,8 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="#">Home</a></li>
-        <li><a href="../handlers">Handlers</a></li>
-        <li class="active"><a href="../plugins">Plugins</a></li>
+        <li class="active"><a href="../handlers">Handlers</a></li>
+        <li><a href="../plugins">Plugins</a></li>
         <li><a href="../connections">Connections</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -77,8 +76,8 @@
     </nav>
 
     <div class="container">
-        <h1><%=pluginId%> - <%=plugin->name()%></h1>
-        <h2><%=plugin->getDescription()%></h2>
+        <h1><%=handlerId%> - <%=handler->name()%></h1>
+        <h2><%=handler->getDescription()%></h2>
         <hr>
         <div class="form-group">
 
@@ -88,7 +87,7 @@
 
           switch (item.getType()) {
         case cd::DataType::BOOLEAN: {
-        bool value = pluginController.getConfigValue<bool>(pluginId,item.getName());
+        bool value = handlerController.getConfigValue<bool>(handlerId, item.getName());
       %>
         <div class="checkbox">
         <label>
@@ -99,7 +98,7 @@
 <%
     } break;
         case cd::DataType::FLOAT: {
-        double value = pluginController.getConfigValue<double>(pluginId,item.getName());
+        double value = handlerController.getConfigValue<double>(handlerId, item.getName());
       %>
         <fieldset class="form-group">
             <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
@@ -108,7 +107,7 @@
 <%
     } break;
         case cd::DataType::INTEGER: {
-        int value = pluginController.getConfigValue<int>(pluginId,item.getName());
+        int value = handlerController.getConfigValue<int>(handlerId,item.getName());
       %>
         <fieldset class="form-group">
             <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
@@ -117,7 +116,7 @@
 <%
     } break;
         case cd::DataType::STRING: {
-        std::string value = pluginController.getConfigValue<std::string>(pluginId,item.getName());
+        std::string value = handlerController.getConfigValue<std::string>(handlerId,item.getName());
       %>
         <fieldset class="form-group">
             <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
@@ -147,7 +146,7 @@
     <script>
                 $(document).ready(function(){
                 $("#savebutton").click(function(){
-                var vpluginid = '<%=pluginId%>';
+                var vpluginid = '<%=handlerId%>';
                 var vconfig = new Object();
 <%
 for (const auto& items : desc) {
@@ -157,7 +156,7 @@ cd::ConfigItem item = items.second;
 <%
 }
 %>
-                hUpdatePluginConfig(vpluginid, JSON.stringify(vconfig));
+                hUpdateHandlerConfig(vpluginid, JSON.stringify(vconfig));
                                       });
                 });
     </script>

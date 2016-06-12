@@ -72,7 +72,31 @@ void HandlersHandler::handleGETRequest(
 
 void HandlersHandler::handlePUTRequest(
     Poco::Net::HTTPServerRequest &request,
-    Poco::Net::HTTPServerResponse &response) {}
+    Poco::Net::HTTPServerResponse &response) {
+  try {
+    Poco::Net::HTMLForm form(request, request.stream());
+
+    std::string id = form["id"];
+    std::string config = form["config"];
+    if (id.empty()) {
+      response.setStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
+      response.send();
+      return;
+    }
+
+    hypha::controller::Handler con(hypha::database::Database::instance());
+    con.updateConfig(id, config);
+    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+    response.send();
+    return;
+  } catch (Poco::Exception &e) {
+    hypha::utils::Logger::error(e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST,
+                                e.what());
+    response.send();
+    return;
+  }
+}
 
 void HandlersHandler::handleDELETERequest(
     Poco::Net::HTTPServerRequest &request,

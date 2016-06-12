@@ -115,7 +115,7 @@
           <label for="host">Host:</label>
           <input type="text" class="form-control" id="host">
         </div>
-        <button id="createpluginbutton" type="button" class="btn btn-default">Create</button>
+        <button id="createbutton" type="button" class="btn btn-default">Create</button>
         </div>
       </div>
 
@@ -133,7 +133,7 @@
     <script src="/js/hyphaapi.js"></script>
     <script>
                 $(document).ready(function(){
-                $("#createpluginbutton").click(function(){
+                $("#createbutton").click(function(){
                 var vpluginid = $("#pluginid").val();
                 var vhost = $("#host").val();
                 var vtype = $("#plugins").val();
