@@ -7,6 +7,7 @@
 #include <hypha/plugin/hyphaplugin.h>
 #include <hypha/plugin/hyphaplugin.h>
 #include <hypha/plugin/pluginloader.h>
+#include <hypha/controller/plugin.h>
 
 #include <confdesc/confdesc.h>
 #include <confdesc/datatypes.h>
@@ -18,6 +19,8 @@
     std::string pluginType = hypha::settings::PluginSettings::instance()->getName(pluginId);
     hypha::plugin::HyphaPlugin* plugin = hypha::plugin::PluginLoader::instance()->getPlugin(pluginType);
     cd::ConfDesc desc(plugin->getConfigDescription());
+    hypha::controller::Plugin pluginController(hypha::database::Database::instance());
+
     std::string projectName(HYPHAWEBMANAGER_PROJECT_NAME);
     std::string projectVersion(HYPHAWEBMANAGER_VERSION);
 %>
@@ -85,36 +88,40 @@
 
           switch (item.getType()) {
         case cd::DataType::BOOLEAN: {
+        bool value = pluginController.getConfigValue<bool>(pluginId,item.getName());
       %>
         <div class="checkbox">
         <label>
-        <input id="<%= item.getName()%>" type="checkbox" checked="<%= item.getValue<bool>() %>">
+        <input id="<%= item.getName()%>" type="checkbox" checked="<%= value %>">
         <%= item.getDescription()%>
         </label>
         </div>
 <%
     } break;
         case cd::DataType::FLOAT: {
+        double value = pluginController.getConfigValue<double>(pluginId,item.getName());
       %>
         <fieldset class="form-group">
             <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
-            <input type="number" class="form-control" id="<%= item.getName()%>" value="<%= item.getValue<double>() %>">
+            <input type="number" class="form-control" id="<%= item.getName()%>" value="<%= value %>">
           </fieldset>
 <%
     } break;
         case cd::DataType::INTEGER: {
+        int value = pluginController.getConfigValue<int>(pluginId,item.getName());
       %>
         <fieldset class="form-group">
             <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
-            <input type="number" class="form-control" id="<%= item.getName()%>" value="<%= item.getValue<int>() %>">
+            <input type="number" class="form-control" id="<%= item.getName()%>" value="<%= value %>">
           </fieldset>
 <%
     } break;
         case cd::DataType::STRING: {
+        std::string value = pluginController.getConfigValue<std::string>(pluginId,item.getName());
       %>
         <fieldset class="form-group">
             <label for="<%= item.getName()%>"><%= item.getDescription()%></label>
-            <input type="text" class="form-control" id="<%= item.getName()%>" value="<%= item.getValue<std::string>() %>">
+            <input type="text" class="form-control" id="<%= item.getName()%>" value="<%= value %>">
           </fieldset>
 <%
     } break;
@@ -140,19 +147,18 @@
                 $(document).ready(function(){
                 $("#savebutton").click(function(){
                 var vpluginid = '<%=pluginId%>';
-                var vconfig = '{'+
+                var vconfig = new Object();
 <%
-                for (const auto& items : desc) {
-                cd::ConfigItem item = items.second;
+for (const auto& items : desc) {
+cd::ConfigItem item = items.second;
 %>
-                      $("#<%=item.getName() %>").val()+','
+    vconfig.<%=item.getName() %> = $("#<%=item.getName() %>").val();
 <%
-                }
+}
 %>
-                                          +'}';
-                hUpdatePluginConfig(vpluginid, vconfig);
+                hUpdatePluginConfig(vpluginid, JSON.stringify(vconfig));
                                       });
-                })
+                });
     </script>
   </body>
 </html>
