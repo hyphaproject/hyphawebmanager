@@ -151,9 +151,19 @@
 <%
 for (const auto& items : desc) {
 cd::ConfigItem item = items.second;
+ switch (item.getType()) {
+  case cd::DataType::BOOLEAN: {
 %>
-    vconfig.<%=item.getName() %> = $("#<%=item.getName() %>").val();
+vconfig.<%=item.getName() %> = $("#<%=item.getName() %>").is(":checked") == true;
 <%
+}break;
+default:
+{
+%>
+     vconfig.<%=item.getName() %> = $("#<%=item.getName() %>").val();
+<%
+}
+};
 }
 %>
                 hUpdateHandlerConfig(vpluginid, JSON.stringify(vconfig));

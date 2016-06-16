@@ -92,7 +92,7 @@
       %>
         <div class="checkbox">
         <label>
-        <input id="<%= item.getName()%>" type="checkbox" checked="<%= value %>">
+        <input id="<%= item.getName()%>" type="checkbox" <%= value==true?"checked":"" %>>
         <%= item.getDescription()%>
         </label>
         </div>
@@ -152,9 +152,19 @@
 <%
 for (const auto& items : desc) {
 cd::ConfigItem item = items.second;
+switch (item.getType()) {
+case cd::DataType::BOOLEAN: {
+%>
+vconfig.<%=item.getName() %> = $("#<%=item.getName() %>").is(":checked") == true;
+<%
+}break;
+default:
+{
 %>
     vconfig.<%=item.getName() %> = $("#<%=item.getName() %>").val();
 <%
+}
+};
 }
 %>
                 hUpdatePluginConfig(vpluginid, JSON.stringify(vconfig));
