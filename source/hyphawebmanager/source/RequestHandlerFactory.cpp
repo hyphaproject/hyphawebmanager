@@ -1,3 +1,4 @@
+// Copyright (c) 2015-2016 Hypha
 #include "RequestHandlerFactory.h"
 #include "ConnectionsPage.h"
 #include "HandlerInstancePage.h"

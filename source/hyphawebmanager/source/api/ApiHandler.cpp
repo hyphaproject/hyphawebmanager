@@ -1,3 +1,4 @@
+// Copyright (c) 2015-2016 Hypha
 #include "api/ApiHandler.h"
 #include "api/ConnectionsHandler.h"
 #include "api/HandlersHandler.h"

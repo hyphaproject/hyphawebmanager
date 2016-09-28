@@ -1,5 +1,6 @@
+// Copyright (c) 2015-2016 Hypha
 #include "api/ConnectionsHandler.h"
-#include <strstream>
+#include <sstream>
 #include "api/UriParser.h"
 
 #include <Poco/Dynamic/Var.h>
@@ -101,7 +102,8 @@ void ConnectionsHandler::handlePOSTRequest(
     return;
   } catch (Poco::Exception &e) {
     hypha::utils::Logger::error(e.what());
-    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST, e.what());
+    response.setStatusAndReason(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST,
+                                e.what());
     response.send();
     return;
   }

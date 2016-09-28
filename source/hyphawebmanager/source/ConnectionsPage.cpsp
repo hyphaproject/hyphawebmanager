@@ -1,3 +1,4 @@
+<%-- Copyright (c) 2015-2016 Hypha --%>
 <%@ page class="ConnectionsPage" %>
 <%!
 #include "hyphawebmanager/hyphawebmanager-version.h"

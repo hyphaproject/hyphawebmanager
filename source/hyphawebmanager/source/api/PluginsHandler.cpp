@@ -1,5 +1,6 @@
+// Copyright (c) 2015-2016 Hypha
 #include "api/PluginsHandler.h"
-#include <strstream>
+#include <sstream>
 #include "api/UriParser.h"
 
 #include <Poco/Dynamic/Var.h>
