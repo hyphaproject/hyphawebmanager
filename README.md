@@ -26,7 +26,7 @@ cmake ..
 make
 ```
 
-#### Build hyphamanager
+#### Build hyphawebmanager
 
 ```sh
 git clone https://github.com/hyphaproject/hyphawebmanager.git
