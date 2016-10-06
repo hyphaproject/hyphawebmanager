@@ -138,13 +138,13 @@ void HyphaWebManager::defineOptions(OptionSet &options) {
                         .callback(OptionCallback<HyphaWebManager>(
                             this, &HyphaWebManager::handleConfig)));
   options.addOption(Option("user", "u", "Name to login.")
-                        .required(true)
+                        .required(false)
                         .repeatable(false)
                         .argument("name")
                         .callback(OptionCallback<HyphaWebManager>(
                             this, &HyphaWebManager::handleConfig)));
   options.addOption(Option("password", "pw", "Password to login.")
-                        .required(true)
+                        .required(false)
                         .repeatable(false)
                         .argument("pass")
                         .callback(OptionCallback<HyphaWebManager>(
