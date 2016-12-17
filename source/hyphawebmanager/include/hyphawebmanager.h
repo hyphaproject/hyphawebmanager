@@ -19,6 +19,7 @@ class HyphaWebManager : public Poco::Util::ServerApplication {
   void handleExampleFile(const std::string &name, const std::string &value);
   void handleConfig(const std::string &name, const std::string &value);
   void displayHelp();
+  void displayConfigFileHelp();
 
  private:
   bool _helpRequested = false;

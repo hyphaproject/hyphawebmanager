@@ -1,10 +1,11 @@
 // Copyright (c) 2015-2016 Hypha
 #include "hyphawebmanager.h"
+#include "RequestHandlerFactory.h"
+#include "hyphawebmanager/hyphawebmanager-version.h"
+
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include "RequestHandlerFactory.h"
-#include "hyphawebmanager/hyphawebmanager-version.h"
 
 #ifdef __linux__
 #include <fcntl.h>
@@ -17,21 +18,23 @@
 #include <sstream>
 #endif
 
-#include <Poco/Net/HTTPServer.h>
-#include <Poco/Net/HTTPServerParams.h>
-#include <Poco/Net/ServerSocket.h>
-#include <Poco/Util/HelpFormatter.h>
-#include <Poco/Util/Option.h>
-
 #include <hypha/core/database/database.h>
 #include <hypha/core/database/databasegenerator.h>
 #include <hypha/core/database/userdatabase.h>
+#include <hypha/core/exceptions/hyphaexception.h>
+#include <hypha/core/exceptions/configfilenotfound.h>
 #include <hypha/core/settings/configgenerator.h>
 #include <hypha/core/settings/databasesettings.h>
 #include <hypha/core/settings/hyphasettings.h>
 #include <hypha/handler/handlerloader.h>
 #include <hypha/plugin/pluginloader.h>
 #include <hypha/utils/logger.h>
+
+#include <Poco/Net/HTTPServer.h>
+#include <Poco/Net/HTTPServerParams.h>
+#include <Poco/Net/ServerSocket.h>
+#include <Poco/Util/HelpFormatter.h>
+#include <Poco/Util/Option.h>
 
 using namespace Poco::Util;
 using namespace hypha::plugin;
@@ -69,6 +72,7 @@ int HyphaWebManager::main(const std::vector<std::string> &args) {
   if (_helpRequested) return Application::EXIT_USAGE;
 
   try {
+    Logger::info("\nLoading Hypha Config ...");
     HyphaSettings::loadInstance(
         config().getString("config-file", "/etc/hypha/hypha.conf"));
     Logger::info("\nLoading Database Settings ...\n");
@@ -108,10 +112,16 @@ int HyphaWebManager::main(const std::vector<std::string> &args) {
     HTTPServer srv(new RequestHandlerFactory(_docroot, _resroot), svs, params);
     // start the HTTPServer
     srv.start();
+    Logger::info("Serving on Port: " + std::to_string(srv.port()));
     // wait for CTRL-C or kill
     waitForTerminationRequest();
     // Stop the HTTPServer
     srv.stop();
+  } catch (hypha::exceptions::ConfigFileNotFound &e) {
+    Logger::fatal(e.what());
+    displayConfigFileHelp();
+  } catch (hypha::exceptions::HyphaException &e) {
+    Logger::fatal(e.what());
   } catch (Poco::Exception &e) {
     Logger::fatal(e.what());
   } catch (std::exception &e) {
@@ -132,7 +142,7 @@ void HyphaWebManager::defineOptions(OptionSet &options) {
           .callback(OptionCallback<HyphaWebManager>(
               this, &HyphaWebManager::handleHelp)));
   options.addOption(Option("port", "p", "Port to serve")
-                        .required(true)
+                        .required(false)
                         .repeatable(false)
                         .argument("number")
                         .callback(OptionCallback<HyphaWebManager>(
@@ -224,6 +234,33 @@ void HyphaWebManager::displayHelp() {
   helpFormatter.setUsage("OPTIONS");
   helpFormatter.setHeader("Hypha Web Manager ...");
   helpFormatter.format(std::cout);
+}
+
+void HyphaWebManager::displayConfigFileHelp()
+{
+    Logger::info("Add following parameters to the program: -f <path to config file>");
+    Logger::info("<hypha>\n \
+                 <database>\n \
+                     <database>hypha.db</database>\n \
+                     <driver>SQLite</driver>\n \
+                     <host>localhost</host>\n \
+                     <username>hypha</username>\n \
+                     <password>password</password>\n \
+                 </database>\n \
+                 <userdatabase>\n \
+                     <database>hypha.db</database>\n \
+                     <driver>SQLite</driver>\n \
+                     <host>localhost</host>\n \
+                     <username>hypha</username>\n \
+                     <password>password</password>\n \
+                     <table>user</table>\n \
+                     <attrDevices>deviceids</attrDevices>\n \
+                     <attrFirstname>firstname</attrFirstname>\n \
+                     <attrLastname>lastname</attrLastname>\n \
+                     <attrMail>mail</attrMail>\n \
+                     <attrUsername>username</attrUsername>\n \
+                 </userdatabase>\n \
+             </hypha>");
 }
 
 POCO_SERVER_MAIN(HyphaWebManager)
