@@ -17,9 +17,12 @@ class HyphaWebManager : public Poco::Util::ServerApplication {
   void defineOptions(Poco::Util::OptionSet &options);
   void handleHelp(const std::string &name, const std::string &value);
   void handleExampleFile(const std::string &name, const std::string &value);
+
+public:
   void handleConfig(const std::string &name, const std::string &value);
   void displayHelp();
   void displayConfigFileHelp();
+  std::string getConfig(const std::string &key);
 
  private:
   bool _helpRequested = false;

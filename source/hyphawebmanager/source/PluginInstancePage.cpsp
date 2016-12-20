@@ -126,7 +126,8 @@
           </fieldset>
 <%
     } break;
-
+    default:
+       break;
      }
 }
 %>

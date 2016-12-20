@@ -21,8 +21,8 @@
 #include <hypha/core/database/database.h>
 #include <hypha/core/database/databasegenerator.h>
 #include <hypha/core/database/userdatabase.h>
-#include <hypha/core/exceptions/hyphaexception.h>
 #include <hypha/core/exceptions/configfilenotfound.h>
+#include <hypha/core/exceptions/hyphaexception.h>
 #include <hypha/core/settings/configgenerator.h>
 #include <hypha/core/settings/databasesettings.h>
 #include <hypha/core/settings/hyphasettings.h>
@@ -236,10 +236,11 @@ void HyphaWebManager::displayHelp() {
   helpFormatter.format(std::cout);
 }
 
-void HyphaWebManager::displayConfigFileHelp()
-{
-    Logger::info("Add following parameters to the program: -f <path to config file>");
-    Logger::info("<hypha>\n \
+void HyphaWebManager::displayConfigFileHelp() {
+  Logger::info(
+      "Add following parameters to the program: -f <path to config file>");
+  Logger::info(
+      "<hypha>\n \
                  <database>\n \
                      <database>hypha.db</database>\n \
                      <driver>SQLite</driver>\n \
@@ -260,7 +261,12 @@ void HyphaWebManager::displayConfigFileHelp()
                      <attrMail>mail</attrMail>\n \
                      <attrUsername>username</attrUsername>\n \
                  </userdatabase>\n \
-             </hypha>");
+              </hypha>");
 }
 
-POCO_SERVER_MAIN(HyphaWebManager)
+std::string HyphaWebManager::getConfig(const std::string &key)
+{
+    return config().getString(key);
+}
+
+
